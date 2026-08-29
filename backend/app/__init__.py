@@ -1,1 +1,0 @@
-"""ChooseForMe backend application package."""
