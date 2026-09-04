@@ -12,9 +12,17 @@ class Base(DeclarativeBase):
     """Declarative base for all ORM models."""
 
 
+def _is_sqlite(url: str) -> bool:
+    return url.startswith("sqlite")
+
+
 engine = create_engine(
     settings.database_url,
-    connect_args={"check_same_thread": False},  # Required for SQLite + FastAPI threads.
+    # Required for SQLite + FastAPI threads. Other dialects (e.g. PostgreSQL
+    # in production) must not receive SQLite-specific connect args.
+    connect_args={"check_same_thread": False} if _is_sqlite(settings.database_url) else {},
+    # Detect and replace connections dropped by managed-DB proxies/idle timeouts.
+    pool_pre_ping=True,
     echo=settings.debug and False,  # Flip to True for SQL logging during development.
 )
 
@@ -30,9 +38,11 @@ def enable_sqlite_foreign_keys(dbapi_connection, _connection_record) -> None:
     cursor.close()
 
 
-@event.listens_for(engine, "connect")
-def _set_sqlite_pragma(dbapi_connection, _connection_record) -> None:
-    enable_sqlite_foreign_keys(dbapi_connection, _connection_record)
+if _is_sqlite(settings.database_url):
+    # PRAGMA is SQLite-only; PostgreSQL enforces foreign keys natively.
+    @event.listens_for(engine, "connect")
+    def _set_sqlite_pragma(dbapi_connection, _connection_record) -> None:
+        enable_sqlite_foreign_keys(dbapi_connection, _connection_record)
 
 
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False, expire_on_commit=False)

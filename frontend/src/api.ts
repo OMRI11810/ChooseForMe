@@ -6,7 +6,14 @@ import type {
   UpdateDecisionInput,
 } from "./types";
 
-const BASE_URL = "/api";
+/**
+ * Base URL of the API.
+ * - Production: VITE_API_URL is set at build time (e.g. "https://<app>.up.railway.app").
+ * - Development: left unset, so requests stay relative ("/api") and the
+ *   Vite dev server proxies them to the local backend.
+ */
+const API_ORIGIN = (import.meta.env.VITE_API_URL ?? "").trim().replace(/\/+$/, "");
+const BASE_URL = `${API_ORIGIN}/api`;
 
 interface ApiErrorPayload {
   detail?: unknown;

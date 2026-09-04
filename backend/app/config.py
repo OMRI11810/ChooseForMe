@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     )
 
     app_name: str = "ChooseForMe API"
-    debug: bool = True
+    debug: bool = False
 
     # SQLite database location (relative to the backend/ directory).
     database_url: str = f"sqlite:///{BASE_DIR / 'chooseforme.db'}"
@@ -31,6 +31,10 @@ class Settings(BaseSettings):
         "http://localhost:5173",
         "http://127.0.0.1:5173",
     ]
+
+    # Optional wildcard matcher for hosts that change per deploy
+    # (e.g. Vercel preview URLs): CHOOSEFORME_CORS_ORIGIN_REGEX=https://.*\.vercel\.app
+    cors_origin_regex: str | None = None
 
 
 settings = Settings()
