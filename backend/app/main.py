@@ -6,16 +6,16 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app import models  # noqa: F401  (register ORM models before create_all / routers)
+from app import models  # noqa: F401  (register ORM models before init_db / routers)
 from app.config import settings
-from app.database import Base, engine
+from app.database import init_db
 from app.routers import decisions
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
-    """Create tables on startup (idempotent)."""
-    Base.metadata.create_all(bind=engine)
+    """Create tables on startup for a fresh database (idempotent)."""
+    init_db()
     yield
 
 

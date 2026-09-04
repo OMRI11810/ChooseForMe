@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
 
 # A non-blank, whitespace-trimmed label used for titles and option labels.
 NonBlankLabel = Annotated[
@@ -32,6 +32,31 @@ class DecisionCreate(BaseModel):
     title: NonBlankLabel
     description: DescriptionText | None = None
     options: list[OptionCreate] = Field(min_length=2, max_length=30)
+
+    @model_validator(mode="after")
+    def _reject_duplicate_options(self) -> "DecisionCreate":
+        """Options must be unique (case-insensitive)."""
+        labels = [option.label.casefold() for option in self.options]
+        if len(labels) != len(set(labels)):
+            raise ValueError("Options must be unique")
+        return self
+
+
+class DecisionUpdate(BaseModel):
+    """Optional fields for updating a decision (PATCH semantics).
+
+    Every field is optional so clients can send only what changed. Omitting
+    `description` leaves it untouched; sending `description: null` clears it.
+    """
+
+    title: NonBlankLabel | None = None
+    description: DescriptionText | None = None
+
+
+class OptionUpdate(BaseModel):
+    """A new label for an existing option."""
+
+    label: NonBlankLabel
 
 
 class OptionOut(BaseModel):

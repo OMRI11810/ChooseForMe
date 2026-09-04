@@ -12,8 +12,10 @@ from app.schemas import (
     DecisionCreate,
     DecisionOut,
     DecisionSummaryOut,
+    DecisionUpdate,
     OptionAdd,
     OptionOut,
+    OptionUpdate,
     PickOut,
 )
 
@@ -29,6 +31,29 @@ def _get_decision_or_404(db: Session, decision_id: int) -> Decision:
     if decision is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Decision not found")
     return decision
+
+
+def _get_option_or_404(db: Session, decision_id: int, option_id: int) -> Option:
+    """Fetch an option that belongs to the given decision, else raise 404.
+
+    A plain 404 is returned even for an existing option owned by a different
+    decision so that option ids from other decisions are not leaked.
+    """
+    option = db.get(Option, option_id)
+    if option is None or option.decision_id != decision_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Option not found in this decision",
+        )
+    return option
+
+
+def _raise_duplicate_label() -> None:
+    """400 error used whenever an option label already exists on the decision."""
+    raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail="An option with that label already exists",
+    )
 
 
 @router.post("", response_model=DecisionOut, status_code=status.HTTP_201_CREATED)
@@ -59,6 +84,27 @@ def get_decision(decision_id: int, db: Session = Depends(get_db)) -> Decision:
     return _get_decision_or_404(db, decision_id)
 
 
+@router.patch("/{decision_id}", response_model=DecisionOut)
+def update_decision(
+    decision_id: int,
+    payload: DecisionUpdate,
+    db: Session = Depends(get_db),
+) -> Decision:
+    """Update a decision's title and/or description (PATCH semantics).
+
+    Only the fields explicitly included in the request are changed. Sending
+    `{"description": null}` clears the description; sending an empty object
+    (`{}`) is a no-op that still returns the current state.
+    """
+    decision = _get_decision_or_404(db, decision_id)
+    updates = payload.model_dump(exclude_unset=True)
+    for field, value in updates.items():
+        setattr(decision, field, value)
+    db.commit()
+    db.refresh(decision)
+    return decision
+
+
 @router.delete("/{decision_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_decision(decision_id: int, db: Session = Depends(get_db)) -> Response:
     """Delete a decision and all of its options."""
@@ -77,7 +123,31 @@ def add_option(decision_id: int, payload: OptionAdd, db: Session = Depends(get_d
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"A decision can have at most {MAX_OPTIONS_PER_DECISION} options",
         )
+    if any(option.label.casefold() == payload.label.casefold() for option in decision.options):
+        _raise_duplicate_label()
     decision.options.append(Option(label=payload.label))
+    db.commit()
+    db.refresh(decision)
+    return decision
+
+
+@router.patch("/{decision_id}/options/{option_id}", response_model=DecisionOut)
+def update_option(
+    decision_id: int,
+    option_id: int,
+    payload: OptionUpdate,
+    db: Session = Depends(get_db),
+) -> Decision:
+    """Rename an existing option."""
+    decision = _get_decision_or_404(db, decision_id)
+    option = _get_option_or_404(db, decision_id, option_id)
+    new_label = payload.label
+    if any(
+        other.label.casefold() == new_label.casefold() and other.id != option.id
+        for other in decision.options
+    ):
+        _raise_duplicate_label()
+    option.label = new_label
     db.commit()
     db.refresh(decision)
     return decision
@@ -91,12 +161,7 @@ def remove_option(
 ) -> Decision:
     """Remove an option, keeping the decision valid (min two options)."""
     decision = _get_decision_or_404(db, decision_id)
-    option = db.get(Option, option_id)
-    if option is None or option.decision_id != decision_id:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Option not found in this decision",
-        )
+    option = _get_option_or_404(db, decision_id, option_id)
     if len(decision.options) <= MIN_OPTIONS_PER_DECISION:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

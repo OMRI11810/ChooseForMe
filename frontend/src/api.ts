@@ -3,6 +3,7 @@ import type {
   Decision,
   DecisionSummary,
   PickResult,
+  UpdateDecisionInput,
 } from "./types";
 
 const BASE_URL = "/api";
@@ -54,9 +55,23 @@ export const decisionsApi = {
     return request(`/decisions/${id}`, { method: "DELETE" });
   },
 
+  updateDecision(id: number, input: UpdateDecisionInput): Promise<Decision> {
+    return request(`/decisions/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(input),
+    });
+  },
+
   addOption(id: number, label: string): Promise<Decision> {
     return request(`/decisions/${id}/options`, {
       method: "POST",
+      body: JSON.stringify({ label }),
+    });
+  },
+
+  updateOption(id: number, optionId: number, label: string): Promise<Decision> {
+    return request(`/decisions/${id}/options/${optionId}`, {
+      method: "PATCH",
       body: JSON.stringify({ label }),
     });
   },
@@ -67,5 +82,9 @@ export const decisionsApi = {
 
   pickWinner(id: number): Promise<PickResult> {
     return request(`/decisions/${id}/pick`, { method: "POST" });
+  },
+
+  clearWinner(id: number): Promise<Decision> {
+    return request(`/decisions/${id}/winner`, { method: "DELETE" });
   },
 };

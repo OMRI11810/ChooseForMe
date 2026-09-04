@@ -36,3 +36,14 @@ export interface CreateDecisionInput {
   description?: string;
   options: string[];
 }
+
+/**
+ * Payload for PATCH /decisions/{id}.
+ *
+ * PATCH semantics: only fields you include are changed. Set `description`
+ * explicitly to `null` to clear an existing description.
+ */
+export interface UpdateDecisionInput {
+  title?: string;
+  description?: string | null;
+}

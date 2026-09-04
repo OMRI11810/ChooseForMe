@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, Sparkles, X } from "lucide-react";
 import type { DecisionOption } from "../types";
+import { optionDotClass, optionDotTextClass } from "./OptionDot";
 
 const SHUFFLE_MS = 1400;
 const TICK_MS = 90;
@@ -17,6 +18,9 @@ export default function PickOverlay({ options, winner, onClose }: PickOverlayPro
   const labels = useMemo(() => options.map((o) => o.label), [options]);
   const [shown, setShown] = useState<string>(labels[0] ?? "");
   const [settled, setSettled] = useState(false);
+  const winnerIndex = options.findIndex((o) => o.id === winner.id);
+  const winnerDotClass = optionDotClass(winnerIndex);
+  const winnerTextClass = optionDotTextClass(winnerIndex);
 
   // Shuffle through options, then settle on the server-chosen winner.
   useEffect(() => {
@@ -71,7 +75,11 @@ export default function PickOverlay({ options, winner, onClose }: PickOverlayPro
           <X className="h-4 w-4" />
         </button>
 
-        <p className="text-xs font-medium uppercase tracking-widest text-ink-tertiary">
+        <p
+          className={`text-xs font-medium uppercase tracking-widest ${
+            settled ? "text-accent-deep" : "text-ink-tertiary"
+          }`}
+        >
           {settled ? "The app decided" : "Deciding…"}
         </p>
 
@@ -82,9 +90,13 @@ export default function PickOverlay({ options, winner, onClose }: PickOverlayPro
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.12 }}
+              transition={
+                settled
+                  ? { type: "spring", stiffness: 320, damping: 20 }
+                  : { duration: 0.12 }
+              }
               className={`text-3xl font-semibold tracking-tight ${
-                settled ? "text-success" : "text-ink"
+                settled ? winnerTextClass : "text-ink"
               }`}
             >
               {settled ? winner.label : shown}
@@ -94,10 +106,10 @@ export default function PickOverlay({ options, winner, onClose }: PickOverlayPro
 
         {settled && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.6 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ type: "spring", stiffness: 380, damping: 16 }}
-            className="mx-auto mt-4 flex h-12 w-12 items-center justify-center rounded-full bg-success text-white"
+            initial={{ opacity: 0, scale: 0.6, rotate: -15 }}
+            animate={{ opacity: 1, scale: 1, rotate: 0 }}
+            transition={{ type: "spring", stiffness: 380, damping: 15 }}
+            className={`mx-auto mt-4 flex h-12 w-12 items-center justify-center rounded-full text-white ring-8 ring-accent-soft/50 ${winnerDotClass}`}
           >
             <Sparkles className="h-6 w-6" />
           </motion.div>
