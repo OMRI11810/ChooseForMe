@@ -1,0 +1,154 @@
+@import "tailwindcss";
+
+/*
+ * Primary font — "Super Frosting", a single regular-weight display face,
+ * bundled locally (freeware). It is registered at its true weight (400) with
+ * font-synthesis disabled, so the browser never fakes a bolder or italic face
+ * that doesn't exist: bolder CSS weights resolve to this Regular face as-is,
+ * and any glyph it lacks falls back to the system stack in --font-sans.
+ */
+@font-face {
+  font-family: "Super Frosting";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("./assets/fonts/super-frosting-font/SuperFrosting-R9z4o.ttf")
+    format("truetype");
+}
+
+/*
+ * ChooseForMe design tokens
+ * Orange-first environment + playful secondary colors, Apple-level refinement.
+ * All colors are CSS variables so adjustments stay centralized.
+ */
+@theme {
+  /* Typography — the bundled display face leads the entire app,
+     with system fonts as fallbacks for missing glyphs. */
+  --font-sans:
+    "Super Frosting",
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  /* Surfaces — orange-dominant environment, white cards for contrast */
+  --color-canvas: #f06b15; /* page background — warm, vibrant, premium orange */
+  --color-surface: #ffffff; /* cards, rows, sheets */
+  --color-surface-secondary: #fbfaf7;
+
+  /* Ink */
+  --color-ink: #1d1d1f; /* primary text */
+  --color-ink-secondary: #6e6e73; /* body secondary */
+  --color-ink-tertiary: #86868b; /* captions, placeholders */
+
+  /* Brand — warm, cheerful, premium orange */
+  --color-accent: #f0801b;
+  --color-accent-hover: #d86f0e;
+  --color-accent-soft: #fff1e2;
+  --color-accent-deep: #b5570a; /* small text on light surfaces */
+
+  /* Semantic */
+  --color-danger: #ff3b30;
+  --color-success: #1a8a4a;
+  --color-success-soft: #e7f6ec;
+
+  /* Secondary accents — Kahoot energy, Apple restraint (orange stays the brand) */
+  --color-accent-red: #f2503f;
+  --color-accent-blue: #1f8de8;
+  --color-accent-green: #2fc45b;
+  --color-accent-purple: #a96be3;
+
+  /* Option dot palette — the complementary colors for options/cards */
+  --color-dot-blue: #1f8de8;
+  --color-dot-green: #2fc45b;
+  --color-dot-orange: #ff9f0a;
+  --color-dot-red: #f2503f;
+  --color-dot-purple: #a96be3;
+
+  /* Hairlines */
+  --color-hairline: rgba(0, 0, 0, 0.08);
+
+  /* Radii */
+  --radius-surface: 20px;
+  --radius-row: 14px;
+  --radius-pill: 9999px;
+
+  /* Motion */
+  --ease-out-soft: cubic-bezier(0.25, 0.8, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  /* Disable synthetic bolding/italic for the single-weight primary font. */
+  font-synthesis: none;
+  -moz-font-synthesis: none;
+  -webkit-font-synthesis: none;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-canvas);
+  /* Orange-dominant environment: a single hand-authored SVG with soft color
+     fields (white glow + orange / purple / blue / green / red blobs) and
+     subtle geometric accents, all pushed to the edges so centered content
+     and white text keep full contrast. Static art — no filters, no animation
+     — so it paints once and costs nothing per frame. */
+  background-image: url("./assets/backgrounds/orange-abstract.svg");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+  background-attachment: fixed;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* Respect users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Visible, brand-orange keyboard focus ring */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/*
+ * Text input style — exactly ONE border, no nested border/outline/ring or
+ * browser default chrome (which caused the double-line appearance).
+ * Pair with layout utilities (w-full, px-*, py-*, text-sm).
+ */
+.field {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: var(--color-surface-secondary);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-row);
+  color: var(--color-ink);
+  font-family: inherit;
+  outline: none;
+  box-shadow: none;
+}
+
+.field:focus {
+  border-color: var(--color-accent);
+  outline: none;
+}
+
+.field::placeholder {
+  color: var(--color-ink-tertiary);
+}
+
+/* Orange border variant (e.g. the option currently being renamed). */
+.field-accent {
+  border-color: var(--color-accent);
+}
