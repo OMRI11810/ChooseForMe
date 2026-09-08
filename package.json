@@ -1,0 +1,17 @@
+{
+  "name": "chooseforme",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ChooseForMe — let the app decide for you.",
+  "scripts": {
+    "install:all": "npm install && npm run install:frontend && npm run install:backend",
+    "install:frontend": "cd frontend && npm install",
+    "install:backend": "pip install -r backend/requirements.txt",
+    "dev": "concurrently -n backend,frontend -c blue,green \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && python -m uvicorn app.main:app --reload --port 8000",
+    "dev:frontend": "cd frontend && npm run dev"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
