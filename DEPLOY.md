@@ -65,4 +65,5 @@ Phone / browser ──▶ https://<app>.vercel.app        (Vercel: static SPA)
 | App loads but network errors on actions | `VITE_API_URL` missing/typo → must be the Railway URL **without** trailing slash, then redeploy Vercel |
 | Railway deploy fails at build | Confirm **Root Directory = `backend`** and `requirements.txt` is committed |
 | Build fails on psycopg2 / no matching wheel | `backend/.python-version` pins Python **3.12** (psycopg2-binary 2.9.10 has no wheels for 3.14) — keep it in place |
+| Backend URL returns Railway 404 `"Application not found"` (browser reports CORS) | **No active deployment is bound to that domain** — open the service's **Deployments** tab and read the Build/Deploy logs; confirm Root Directory = `backend`, the domain exists under Settings → Networking, and every Variable resolves (e.g. a `${{Postgres.DATABASE_URL}}` reference to a non-existent service, or `alembic upgrade head` failing to reach the DB, fails the deploy) |
 | Vercel deep links 404 | `frontend/vercel.json` missing → it must be committed and the project root must be `frontend` |
